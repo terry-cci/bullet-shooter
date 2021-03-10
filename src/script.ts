@@ -35,9 +35,15 @@ class Pos {
     return new Pos(e.clientX, e.clientY);
   }
 
-  public applyTranslation(trans: Translation) {
-    this.x += trans.dx;
-    this.y += trans.dy;
+  public static clone(p: Pos) {
+    return new Pos(p.x, p.y);
+  }
+
+  public translate(trans: Translation) {
+    const newPos = Pos.clone(this);
+    newPos.x += trans.dx;
+    newPos.y += trans.dy;
+    return newPos;
   }
 }
 
@@ -103,10 +109,10 @@ class Bullet {
   board: Board;
   speed: Speed;
 
-  constructor(board: Board, x: number, y: number, speed: Speed) {
+  constructor(board: Board, pos: Pos, speed: Speed) {
     // member
     this.board = board;
-    this.pos = new Pos(x, y);
+    this.pos = Pos.clone(pos);
     this.speed = speed;
 
     // element
@@ -125,7 +131,9 @@ class Bullet {
   private tick() {
     if (this.board.doesIncludeRelPos(this.pos)) {
       // flying tick
-      this.pos.applyTranslation(this.speed.getTranslation(Board.TICK_INTERVAL));
+      this.pos = this.pos.translate(
+        this.speed.getTranslation(Board.TICK_INTERVAL)
+      );
       this.render();
     } else {
       // outbound removal
@@ -145,10 +153,10 @@ class Shooter {
     w: Board.SIZE.w / 10,
     h: Board.SIZE.w / 10,
   };
-  static readonly BULLET_SPEED = new Speed(0, 400);
+  static readonly BULLET_SPEED = new Speed(0, 450);
 
   el: HTMLDivElement;
-  pos: Pos = new Pos(Board.SIZE.w / 2 + Board.SIZE.w / 2, Board.SIZE.h / 2);
+  pos: Pos = new Pos(Board.SIZE.w / 2, Shooter.SIZE.h / 2);
   board!: Board;
 
   constructor() {
@@ -159,19 +167,29 @@ class Shooter {
     // moving
     document.body.addEventListener("mousemove", (e) => {
       const pos = this.board.getRelPos(Pos.fromMouseEvent(e));
+      const boardRect = this.board.el.getBoundingClientRect();
 
       this.pos.x = pos.x;
+      this.pos.x = Math.max(pos.x, 0);
+      this.pos.x = Math.min(pos.x, boardRect.width);
       this.render();
     });
 
     // shooting
     document.body.addEventListener("click", (e) => {
-      new Bullet(this.board, this.pos.x, Shooter.SIZE.h, Shooter.BULLET_SPEED);
+      new Bullet(
+        this.board,
+        this.pos.translate(new Translation(0, Shooter.SIZE.h / 2)),
+        Shooter.BULLET_SPEED
+      );
     });
+
+    this.render();
   }
 
   private render() {
     this.el.style.setProperty("--x", `${this.pos.x - Shooter.SIZE.w / 2}px`);
+    this.el.style.setProperty("--y", `${this.pos.y - Shooter.SIZE.w / 2}px`);
   }
 }
 
