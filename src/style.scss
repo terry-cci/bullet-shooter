@@ -30,6 +30,12 @@ main {
   height: var(--board-height);
 }
 
+main > * {
+  position: absolute;
+  left: var(--x);
+  bottom: var(--y);
+}
+
 #shooter {
   --r: 85;
 
@@ -38,22 +44,10 @@ main {
 
   width: var(--shooter-width);
   height: var(--shooter-height);
-
-  position: absolute;
-  bottom: 0;
-
-  // default position
-  --x: calc(50% - var(--shooter-width) / 2);
-
-  left: var(--x);
 }
 
 .bullet {
-  background: #666;
+  background: #777;
   width: var(--bullet-width);
   height: var(--bullet-height);
-
-  position: absolute;
-  left: var(--x);
-  bottom: var(--y);
 }
