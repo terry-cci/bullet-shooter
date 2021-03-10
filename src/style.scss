@@ -1,0 +1,59 @@
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body {
+  @include flex-center;
+
+  margin: 0;
+  background: #444;
+  min-height: 100vh;
+}
+
+main {
+  background: #eee;
+  border: 3px solid wheat;
+  border-radius: 10px;
+  box-shadow: 8px 8px 20px #222;
+
+  position: relative;
+  overflow: hidden;
+
+  width: var(--board-width);
+  height: var(--board-height);
+}
+
+#shooter {
+  --r: 85;
+
+  background: rgb(var(--r), 85, 85);
+  border: 5px solid #555;
+
+  width: var(--shooter-width);
+  height: var(--shooter-height);
+
+  position: absolute;
+  bottom: 0;
+
+  // default position
+  --x: calc(50% - var(--shooter-width) / 2);
+
+  left: var(--x);
+}
+
+.bullet {
+  background: #666;
+  width: var(--bullet-width);
+  height: var(--bullet-height);
+
+  position: absolute;
+  left: var(--x);
+  bottom: var(--y);
+}
