@@ -1,3 +1,5 @@
+import "./style.scss";
+
 interface constConfig {
   name: string;
   value: string | null;
