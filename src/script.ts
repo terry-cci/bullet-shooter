@@ -166,8 +166,8 @@ class Shooter extends Entity {
       const boardRect = board.el.getBoundingClientRect();
 
       this.pos.x = pos.x;
-      this.pos.x = Math.max(pos.x, 0);
-      this.pos.x = Math.min(pos.x, boardRect.width);
+      this.pos.x = Math.max(this.pos.x, 0);
+      this.pos.x = Math.min(this.pos.x, boardRect.width);
       this.render();
     });
 
