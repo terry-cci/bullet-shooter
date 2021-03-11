@@ -3,10 +3,14 @@ interface constConfig {
   value: string | null;
 }
 
-type Size = {
-  w: number;
-  h: number;
-};
+class Size {
+  width: number;
+  height: number;
+  constructor(w: number, h: number) {
+    this.width = w;
+    this.height = h;
+  }
+}
 
 class Translation {
   dx: number;
@@ -64,23 +68,11 @@ class Speed {
 
 class Board {
   static readonly TICK_INTERVAL = 16;
-  static readonly SIZE: Size = {
-    w: 400,
-    h: 600,
-  };
+  static readonly SIZE = new Size(400, 600);
 
   el: HTMLElement;
-  shooters: Shooter[] = [];
-
   constructor(el: HTMLElement) {
     this.el = el;
-  }
-
-  public addShooter(shooter: Shooter) {
-    shooter.board = this;
-    this.el.appendChild(shooter.el);
-
-    this.shooters.push(shooter);
   }
 
   public doesIncludeRelPos(p: Pos) {
@@ -97,28 +89,39 @@ class Board {
   }
 }
 
-class Bullet {
-  static readonly SIZE: Size = {
-    w: Board.SIZE.w / 50,
-    h: Board.SIZE.w / 50,
-  };
-
-  el: HTMLDivElement;
+class Entity {
+  el: HTMLElement;
   pos: Pos;
+  size: Size;
+
+  constructor(el: HTMLElement, p: Pos, s: Size) {
+    this.el = el;
+    this.pos = p;
+    this.size = s;
+
+    $board.appendChild(this.el);
+  }
+
+  public render() {
+    this.el.style.setProperty("--x", `${this.pos.x - this.size.width / 2}px`);
+    this.el.style.setProperty("--y", `${this.pos.y - this.size.height / 2}px`);
+  }
+}
+
+class Bullet extends Entity {
+  static SIZE = new Size(Board.SIZE.width / 50, Board.SIZE.width / 50);
   tickTimeout: NodeJS.Timeout;
-  board: Board;
   speed: Speed;
 
-  constructor(board: Board, pos: Pos, speed: Speed) {
-    // member
-    this.board = board;
-    this.pos = Pos.clone(pos);
-    this.speed = speed;
-
+  constructor(pos: Pos, speed: Speed) {
     // element
-    this.el = document.createElement("div");
-    this.el.classList.add("bullet");
-    this.board.el.appendChild(this.el);
+    const el = document.createElement("div");
+    el.classList.add("bullet");
+
+    super(el, pos, Bullet.SIZE);
+
+    // member
+    this.speed = speed;
 
     // setup ticks
     this.tickTimeout = setInterval(() => {
@@ -129,7 +132,7 @@ class Bullet {
   }
 
   private tick() {
-    if (this.board.doesIncludeRelPos(this.pos)) {
+    if (board.doesIncludeRelPos(this.pos)) {
       // flying tick
       this.pos = this.pos.translate(
         this.speed.getTranslation(Board.TICK_INTERVAL)
@@ -141,33 +144,26 @@ class Bullet {
       this.el.remove();
     }
   }
-
-  private render() {
-    this.el.style.setProperty("--y", `${this.pos.y - Bullet.SIZE.h / 2}px`);
-    this.el.style.setProperty("--x", `${this.pos.x - Bullet.SIZE.w / 2}px`);
-  }
 }
 
-class Shooter {
-  static readonly SIZE: Size = {
-    w: Board.SIZE.w / 10,
-    h: Board.SIZE.w / 10,
-  };
+class Shooter extends Entity {
   static readonly BULLET_SPEED = new Speed(0, 450);
 
-  el: HTMLDivElement;
-  pos: Pos = new Pos(Board.SIZE.w / 2, Shooter.SIZE.h / 2);
-  board!: Board;
-
   constructor() {
+    const el = document.createElement("div");
+    el.id = "shooter";
+
+    super(
+      el,
+      new Pos(Board.SIZE.width / 2, Board.SIZE.width / 20),
+      new Size(Board.SIZE.width / 10, Board.SIZE.width / 10)
+    );
     // element
-    this.el = document.createElement("div");
-    this.el.id = "shooter";
 
     // moving
     document.body.addEventListener("mousemove", (e) => {
-      const pos = this.board.getRelPos(Pos.fromMouseEvent(e));
-      const boardRect = this.board.el.getBoundingClientRect();
+      const pos = board.getRelPos(Pos.fromMouseEvent(e));
+      const boardRect = board.el.getBoundingClientRect();
 
       this.pos.x = pos.x;
       this.pos.x = Math.max(pos.x, 0);
@@ -176,22 +172,21 @@ class Shooter {
     });
 
     // shooting
-    document.body.addEventListener("click", (e) => {
+    document.body.addEventListener("click", () => {
       new Bullet(
-        this.board,
-        this.pos.translate(new Translation(0, Shooter.SIZE.h / 2)),
+        this.pos.translate(new Translation(0, this.size.height / 2)),
         Shooter.BULLET_SPEED
       );
     });
 
     this.render();
   }
-
-  private render() {
-    this.el.style.setProperty("--x", `${this.pos.x - Shooter.SIZE.w / 2}px`);
-    this.el.style.setProperty("--y", `${this.pos.y - Shooter.SIZE.w / 2}px`);
-  }
 }
+
+const $board = document.querySelector("main") as HTMLElement;
+const board = new Board($board);
+
+const shooter = new Shooter();
 
 function setStyleConst(config: constConfig[]) {
   config.forEach((c) => {
@@ -200,13 +195,10 @@ function setStyleConst(config: constConfig[]) {
 }
 
 setStyleConst([
-  { name: "board-width", value: `${Board.SIZE.w}px` },
-  { name: "board-height", value: `${Board.SIZE.h}px` },
-  { name: "shooter-width", value: `${Shooter.SIZE.w}px` },
-  { name: "shooter-height", value: `${Shooter.SIZE.h}px` },
-  { name: "bullet-width", value: `${Bullet.SIZE.w}px` },
-  { name: "bullet-height", value: `${Bullet.SIZE.h}px` },
+  { name: "board-width", value: `${Board.SIZE.width}px` },
+  { name: "board-height", value: `${Board.SIZE.height}px` },
+  { name: "shooter-width", value: `${shooter.size.width}px` },
+  { name: "shooter-height", value: `${shooter.size.height}px` },
+  { name: "bullet-width", value: `${Bullet.SIZE.width}px` },
+  { name: "bullet-height", value: `${Bullet.SIZE.height}px` },
 ]);
-
-const board = new Board(document.querySelector("main") as HTMLElement);
-board.addShooter(new Shooter());
