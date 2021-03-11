@@ -1,6 +1,6 @@
 import { dest, parallel, series, src, watch } from "gulp";
 
-import bs, { stream } from "browser-sync";
+import bs from "browser-sync";
 import ts from "gulp-typescript";
 import cSass from "gulp-sass";
 import del from "del";
@@ -17,7 +17,7 @@ export function publicFile() {
 
 export function tsc() {
   return src("src/**.ts")
-    .pipe(ts())
+    .pipe(ts({ target: "es5" }))
     .pipe(dest("dist/js"))
     .pipe(server.stream());
 }
